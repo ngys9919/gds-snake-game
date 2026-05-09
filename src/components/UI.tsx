@@ -6,6 +6,7 @@
 import { useGameStore } from '../store/gameStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, Trophy } from 'lucide-react';
+import { audioService } from '../services/audioService';
 
 export function UI() {
   const { gameState, playerId, joinGame } = useGameStore();
@@ -13,6 +14,12 @@ export function UI() {
   const player = playerId && gameState ? gameState.players[playerId] : null;
   const isAlive = player?.state === 'alive';
   const isDead = player?.state === 'dead';
+
+  const handleJoin = () => {
+    audioService.init();
+    audioService.playJoin();
+    joinGame();
+  };
 
   const handleOpenNewTab = () => {
     window.open(window.location.href, '_blank');
@@ -103,7 +110,7 @@ export function UI() {
               )}
               
               <button
-                onClick={joinGame}
+                onClick={handleJoin}
                 className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors active:scale-95"
               >
                 {isDead ? 'RESPAWN' : 'PLAY'}

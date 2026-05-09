@@ -9,6 +9,7 @@ import { useGameStore, globalGameState } from '../store/gameStore';
 import { WORLD_SIZE, TURN_SPEED, BOOST_SPEED, BASE_SPEED } from '../shared/types';
 import * as THREE from 'three';
 import { Sphere, Grid, Text, Billboard } from '@react-three/drei';
+import { audioService } from '../services/audioService';
 
 const localCollectedOrbs = new Set<string>();
 
@@ -219,6 +220,7 @@ export function GameScene() {
 
     const handleBlur = () => {
       inputs.current = { left: false, right: false, boost: false };
+      audioService.setBoost(false);
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -254,6 +256,7 @@ export function GameScene() {
       if (inputs.current.right) localPlayerRef.current.currentAngle -= TURN_SPEED * delta;
       
       localPlayerRef.current.isBoosting = inputs.current.boost && localPlayerRef.current.score > 10;
+      audioService.setBoost(localPlayerRef.current.isBoosting);
       const speed = localPlayerRef.current.isBoosting ? BOOST_SPEED : BASE_SPEED;
       
       const head = { ...localPlayerRef.current.segments[0] };
@@ -293,6 +296,7 @@ export function GameScene() {
           localCollectedOrbs.add(orbId);
           delete gs.orbs[orbId]; // predict locally
           sendCollectOrb(orbId);
+          audioService.playCollect();
         }
       }
 
@@ -322,6 +326,8 @@ export function GameScene() {
 
       if (collided) {
         localPlayerRef.current.active = false;
+        audioService.setBoost(false);
+        audioService.playDeath();
         sendPlayerState({
           segments: localPlayerRef.current.segments,
           score: localPlayerRef.current.score,
@@ -365,6 +371,9 @@ export function GameScene() {
         lightTarget.position.set(camera.position.x, camera.position.y, 0);
       }
     } else {
+      if (localPlayerRef.current.active) {
+        audioService.setBoost(false);
+      }
       localPlayerRef.current.active = false;
     }
   });
