@@ -4,6 +4,8 @@
 */
 
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
@@ -22,6 +24,9 @@ import {
   TURN_SPEED,
 } from './src/shared/types.ts';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -30,7 +35,7 @@ const io = new Server(httpServer, {
   },
 });
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const COLORS = [
   '#ff7eb3', // vibrant pink
@@ -178,7 +183,11 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static('dist'));
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
   }
 
   httpServer.listen(PORT, '0.0.0.0', () => {
